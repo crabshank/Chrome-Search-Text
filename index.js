@@ -49,22 +49,6 @@ function send(message) {
     }
 
 }
-
-frms.oninput=(e)=>{
-	let p=frms[frms.selectedIndex];
-	let m=p.getAttribute('marked');
-	if(m=='1'){
-		mkp.style.display='none';
-		mkps.style.display='none';
-		txtar.style.display='none';
-		spt.style.display='';
-	}else{
-		mkp.style.display='';
-		mkps.style.display='';
-		txtar.style.display='';
-		spt.style.display='none';
-	}
-}
  
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     let m=message.message;
@@ -112,5 +96,4 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		frms.insertAdjacentElement('beforeend',f[0]);
 	});
 	frms.selectedIndex=0;
-	frms.dispatchEvent(new Event('input'));
 });

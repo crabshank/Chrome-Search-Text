@@ -1,4 +1,5 @@
-var sct,ifrm,ifdoc,robs,docText,res,txta,patEl,plainSearch,caseInsens,res_sct;
+var sct=null;
+var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct;
 
 function rsz(){
 	ifrm.style.setProperty( 'width', `${ifdoc.body.scrollWidth}px`, 'important' );
@@ -221,6 +222,7 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 	let str=srch[0];
 	let byRes={};
     let brc=0;
+	let a=[];
     if(plain===true){
 		let strRaw=str;
 		let patRaw=pat;
@@ -228,144 +230,43 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 			str=str.toLocaleLowerCase();
 			pat=pat.toLocaleLowerCase();
 		}
-        let a=str.indexOf(pat);
+        let b=str.indexOf(pat);
         let pl=pat.length;
-        while(a!==-1){
-			let ed=a+pl-1;
+		let done_txn=[];
+		let pels=[];
+        while(b!==-1){
+			let ed=b+pl-1;
 			let tx=pat;
 			if(case_insensitive){
 				tx='';
-				 for(let i=a; i<=ed; i++){
+				 for(let i=b; i<=ed; i++){
 					 tx+=strRaw[i];
 				 }
 			}
-			let stl=srch[1][a][0];
-			let stl_ih=stl.innerHTML;
-			
-			let op={text:tx, allEls:{starting:[stl,stl_ih], all:[]}, posRange:[a,ed]};
-			let op1={allEls:{starting:[stl,stl_ih], all:[]}, posRange:[a,ed]};
-				op1.index=out.length;
-				
-			//create marks
-			let done_txn=[];
-			let pels=[];
-			let p0=op.posRange[0];
-            let p1=op.posRange[1];
-			for(let b=p0; b<=p1; ++b){
-				let txb=srch[1][b];
-				let txn=txb[2];
-				let pel=txb[0];
-				let doneIx=done_txn.findIndex(n=>{return n[0]===txn});
-				if(doneIx===-1){
-					op.allEls.all.push([pel,pel.innerHTML]);
-					op1.allEls.all.push([pel,pel.innerHTML]);
-					let mks=getMatchingNodesShadow_order(pel, 'mark', true, false);
-					let markMap={};
-					for(let m=0, len_m=mks.length; m<len_m; m++){
-						let mk=mks[m];
-						let m1=(m+1).toString();
-						markMap[m1]=mk.className;
-						mk.className=m1;
-					}
-					let txc=[...txn.textContent];
-					let clss= b!==p0 ? '' : ' class="0"' ;
-					txc[txb[1]]=`<mark${clss}>`+txc[txb[1]]+'</mark>';
-					let pix=pels.findIndex(prl=>{return prl[0]===pel;});
-					if(pix===-1){
-						pels.push([pel,done_txn.length]);
-					}else{
-						pels[pix][1]=done_txn.length;
-					}
-					done_txn.push([txn,txc,pel,markMap]);
-				}else{
-					let txc=done_txn[doneIx][1];
-					txc[txb[1]]='<mark>'+txc[txb[1]]+'</mark>';
-					done_txn[doneIx][1]=txc;
-				}
-			}
-			
-			for(let i=0, len_i=done_txn.length; i<len_i; i++){
-				let pp=done_txn[2];
-				for(let i=0, len_i=done_txn.length; i<len_i; i++){
-					
-				}
-			}
-			
-			op.resultMarks=[null,[]];
-			op1.resultMarks=[null,[]];
-			for(let i=0, len_i=done_txn.length; i<len_i; i++){
-				let di=done_txn[i];
-				di[0].textContent=di[1].join('');
-				let ix=pels.findIndex(prl=>{return prl[0]===di[2];});
-				if(i===pels[ix][1]){
-					let classMarks=[...di[2].innerHTML.matchAll(/\&lt\;mark class\=\"([0-9]+)\"\&gt\;/g)];
-					classMarks.forEach((c)=>{
-						let c0=c[0];
-						let c0_nw=c0.replaceAll('&lt;','<').replaceAll('&gt;','>');
-						di[2].innerHTML=di[2].innerHTML.replaceAll(c0,c0_nw);
-					});
-					di[2].innerHTML=di[2].innerHTML.replaceAll('&lt;mark&gt;','<mark>').replaceAll('&lt;/mark&gt;','</mark>');
-					
-					let mks=getMatchingNodesShadow_order(di[2], 'mark', true, false);
-					let mk0=mks.find(m=>{return m.className==='0'});
-					let markMap=di[3];
-					
-					for(let m=0, len_m=mks.length; m<len_m; m++){
-						let mk=mks[m];
-						let m1=(m+1).toString();
-						if(mk===mk0){
-							mk.className='';
-							op.resultMarks[0]=mk;
-							op.resultMarks[1].push(mk);
-							op1.resultMarks[0]=mk;
-							op1.resultMarks[1].push(mk);
-						}else if(typeof(markMap[m1])!=='undefined'){
-							mk.className=markMap[m1];
-						}else{
-							op.resultMarks[1].push(mk);
-							op1.resultMarks[1].push(mk);
-						}
-					}
-				}
-			}
-			
-		/*op.resultMarks[1]=op.resultMarks[1].filter(l=>{return getAncestors(l,true,true,true,true).includes(document.documentElement)===true;});
-		op.resultMarks[1]=Array.from(new Set(op.resultMarks[1]));
-		op.resultMarks[0]=op.resultMarks[1][0];
-		op1.resultMarks[0]=op.resultMarks[0];
-		op1.resultMarks[1]=op.resultMarks[1];
-		
-		op.allEls.all=op.allEls.all.filter(l=>{return getAncestors(l[0],true,true,true,true).includes(document.documentElement)===true;});
-		op.allEls.all=Array.from(new Set(op.allEls.all));
-		op.allEls.starting=op.allEls.all[0];
-		op1.allEls.all=op.allEls.all;
-		op1.allEls.starting=	op.allEls.starting;*/
-			
-			if(typeof(byRes[tx])==='undefined'){
-				byRes[tx]=[op1];
-                brc++;
-			}else{
-				byRes[tx].push(op1);
-			}
-            out.push(op);
-            a=str.indexOf(pat,a+pl);
+			let sa=[tx];
+			sa.index=b;
+			a.push(sa);
+			b=str.indexOf(pat,b+pl);
         }
     }else{ //regex
-        let a=[...str.matchAll(pat)];
+		a=[...str.matchAll(pat)];
+	}
+	
+		let pels=[];
+		
         for(let i=0, len_i=a.length; i<len_i; i++){
             let ai=a[i];
             let ai0=ai[0];
             let aix=ai.index;
 			let stl=srch[1][aix][0];
 			let stl_ih=stl.innerHTML;
-
 			let op={text:ai0, allEls:{starting:[stl,stl_ih], all:[]}, posRange:[aix,aix+ai0.length-1]};
+			//op.resultMarks=[null,[]];
 			let op1={allEls:{starting:[stl,stl_ih], all:[]}, posRange:[aix,aix+ai0.length-1]};
 				op1.index=out.length;
 				
 			//create marks
 			let done_txn=[];
-			let pels=[];
 			let p0=op.posRange[0];
             let p1=op.posRange[1];
 			for(let b=p0; b<=p1; ++b){
@@ -373,6 +274,12 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 				let txn=txb[2];
 				let pel=txb[0];
 				let doneIx=done_txn.findIndex(n=>{return n[0]===txn});
+				let pix=pels.findIndex(prl=>{return prl[0]===pel;});
+				if(pix===-1){
+					pels.push([pel,1]);
+				}else{
+					pels[pix][1]=pels[pix][1]+1; //count number of marks in each parent
+				}
 				if(doneIx===-1){
 					op.allEls.all.push([pel,pel.innerHTML]);
 					op1.allEls.all.push([pel,pel.innerHTML]);
@@ -387,12 +294,6 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 					let txc=[...txn.textContent];
 					let clss= b!==p0 ? '' : ' class="0"' ;
 					txc[txb[1]]=`<mark${clss}>`+txc[txb[1]]+'</mark>';
-					let pix=pels.findIndex(prl=>{return prl[0]===pel;});
-					if(pix===-1){
-						pels.push([pel,done_txn.length]);
-					}else{
-						pels[pix][1]=done_txn.length;
-					}
 					done_txn.push([txn,txc,pel,markMap]);
 				}else{
 					let txc=done_txn[doneIx][1];
@@ -406,51 +307,37 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 			for(let i=0, len_i=done_txn.length; i<len_i; i++){
 				let di=done_txn[i];
 				di[0].textContent=di[1].join('');
-				let ix=pels.findIndex(prl=>{return prl[0]===di[2];});
-				if(i===pels[ix][1]){
-					let classMarks=[...di[2].innerHTML.matchAll(/\&lt\;mark class\=\"([0-9]+)\"\&gt\;/g)];
-					classMarks.forEach((c)=>{
-						let c0=c[0];
-						let c0_nw=c0.replaceAll('&lt;','<').replaceAll('&gt;','>');	
-						di[2].innerHTML=di[2].innerHTML.replaceAll(c0,c0_nw);
-					});
-					di[2].innerHTML=di[2].innerHTML.replaceAll('&lt;mark&gt;','<mark>').replaceAll('&lt;/mark&gt;','</mark>');
-					
-					let mks=getMatchingNodesShadow_order(di[2], 'mark', true, false);
-					let mk0=mks.find(m=>{return m.className==='0'});
-					let markMap=di[3];
-					
-					for(let m=0, len_m=mks.length; m<len_m; m++){
-						let mk=mks[m];
-						let m1=(m+1).toString();
-						if(mk===mk0){
-							mk.className='';
-							op.resultMarks[0]=mk;
-							op.resultMarks[1].push(mk);
-							op1.resultMarks[0]=mk;
-							op1.resultMarks[1].push(mk);
-						}else if(typeof(markMap[m1])!=='undefined'){
-							mk.className=markMap[m1];
-						}else{
-							op.resultMarks[1].push(mk);
-							op1.resultMarks[1].push(mk);
-						}
+
+				let classMarks=[...di[2].innerHTML.matchAll(/\&lt\;mark class\=\"([0-9]+)\"\&gt\;/g)];
+				classMarks.forEach((c)=>{
+					let c0=c[0];
+					let c0_nw=c0.replaceAll('&lt;','<').replaceAll('&gt;','>');	
+					di[2].innerHTML=di[2].innerHTML.replaceAll(c0,c0_nw);
+				});
+				di[2].innerHTML=di[2].innerHTML.replaceAll('&lt;mark&gt;','<mark>').replaceAll('&lt;/mark&gt;','</mark>');
+				
+				let mks=getMatchingNodesShadow_order(di[2], 'mark', true, false);
+				let mk0=mks.find(m=>{return m.className==='0'});
+				let markMap=di[3];
+				
+				for(let m=0, len_m=mks.length; m<len_m; m++){
+					let mk=mks[m];
+					let m1=(m+1).toString();
+					if(mk===mk0){
+						mk.className='';
+						op.resultMarks[0]=mk;
+						op.resultMarks[1].push(mk);
+						op1.resultMarks[0]=mk;
+						op1.resultMarks[1].push(mk);
+					}else if(typeof(markMap[m1])!=='undefined'){
+						mk.className=markMap[m1];
+					}else{
+						op.resultMarks[1].push(mk);
+						op1.resultMarks[1].push(mk);
 					}
 				}
 			}
-			
-		/*op.resultMarks[1]=op.resultMarks[1].filter(l=>{return getAncestors(l,true,true,true,true).includes(document.documentElement)===true;});
-		op.resultMarks[1]=Array.from(new Set(op.resultMarks[1]));
-		op.resultMarks[0]=op.resultMarks[1][0];
-		op1.resultMarks[0]=op.resultMarks[0];
-		op1.resultMarks[1]=op.resultMarks[1];
-		
-		op.allEls.all=op.allEls.all.filter(l=>{return getAncestors(l[0],true,true,true,true).includes(document.documentElement)===true;});
-		op.allEls.all=Array.from(new Set(op.allEls.all));
-		op.allEls.starting=op.allEls.all[0];
-		op1.allEls.all=op.allEls.all;
-		op1.allEls.starting=	op.allEls.starting;*/
-			
+						
 			if(typeof(byRes[ai0])==='undefined'){
 				byRes[ai0]=[op1];
                 brc++;
@@ -459,8 +346,7 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 			}
             out.push(op);
         }
-    }
-
+	
 	out.byResult=byRes;
     out.byResult_count=brc;
 	out.docText=srch;
@@ -560,8 +446,20 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
     return out;
 }
 
+function closeFrame(){
+	if(typeof(res)!=='undefined'){
+			res.revert_hl();
+	}
+	if(sct!==null){
+		robs.disconnect();
+		elRemover(sct);
+		sct=null;
+	}
+}
+
 let fs={
 	setupPatt: (s)=>{
+		closeFrame();
 		sct=document.createElement('section');
 		document.body.insertAdjacentElement('beforeend',sct);
 		sct.style.setProperty( 'z-index', Number.MAX_SAFE_INTEGER, 'important' );
@@ -622,9 +520,7 @@ let fs={
 				let ix=parseInt(t.getAttribute('jix'));
 				res.jump(ix);
 			}else if(t.id==='closeFrame'){
-				res.revert_hl();
-				robs.disconnect();
-				elRemover(sct);
+				closeFrame();
 			}
 		}
 		
