@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Search text",
+  "version": "2024.7",
+  //"options_page":  "options.html",
+  "content_scripts": [
+    {
+	      "all_frames": true,
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "permissions": [
+	"tabs",
+	"activeTab"//,
+	//"storage"
+  ],
+  "action": {
+    "default_icon": "searchText.png",
+    "default_popup": "index.html"
+  },
+  	"icons": {
+        "128": "searchText.png"
+    }
+}
