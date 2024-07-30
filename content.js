@@ -204,18 +204,21 @@ function getSearchable(s){ //Return selectable text
 	for(let i=0, len_i=sel.length; i<len_i; i++){
 		let el=sel[i];
 		let n=getMatchingNodesShadow_order(el, '#text', true, false);
-		for(let k=0, len_k=n.length; k<len_k; k++){
-			let nk=n[k];
-			let pp=nk.parentElement;
-			let dtc=nk.textContent;
-			txt[0]+=dtc;
-			for(let i=0, len_i=dtc.length; i<len_i; i++){
-				txt[1].push([pp,i,nk]);
-			}
-		}
+        let st=0;
+        for(let k=0, len_k=n.length; k<len_k; k++){
+            let nk=n[k];
+            let pp=nk.parentElement;
+            let dtc=nk.textContent;
+            txt[0]+=dtc;
+            for(let i=0, len_i=dtc.length; i<len_i; i++){
+                txt[1].push([pp,i,nk,st]);
+            }
+        st+=dtc.length;
+        }
 	}
     return txt;
 }
+
 
 function findText(srch,pat,plain,case_insensitive){	//search for text; case-insenstive is only relevant when plain===true;
     let out=[];
