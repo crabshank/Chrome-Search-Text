@@ -1,4 +1,4 @@
-send('getStatus');
+send('getStatus',true);
 
 let spt=document.getElementById('setupPatt');
 let frms=document.getElementById('frms');
@@ -22,11 +22,10 @@ window.onclick=(e)=>{
 	t=e.target;
 	if(t===spt){
 		send([t.id,null]);
-		window.close();
 	}
 };
 
-function send(message) {
+function send(message,notClose) {
 
     let params = {
       active: true,
@@ -46,6 +45,9 @@ function send(message) {
 	  }else{
 		  chrome.tabs.sendMessage(tid, msg);
 	  }
+      if(notClose!==true){
+        window.close();
+      }
     }
 
 }

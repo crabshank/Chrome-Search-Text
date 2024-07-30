@@ -253,104 +253,173 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 	}
 	
 		let pels=[];
-		
-        for(let i=0, len_i=a.length; i<len_i; i++){
+        let txns=[];
+		for(let i=0, len_i=a.length; i<len_i; i++){
             let ai=a[i];
             let ai0=ai[0];
             let aix=ai.index;
 			let stl=srch[1][aix][0];
 			let stl_ih=stl.innerHTML;
 			let op={text:ai0, allEls:{starting:[stl,stl_ih], all:[]}, posRange:[aix,aix+ai0.length-1]};
-			//op.resultMarks=[null,[]];
-			let op1={allEls:{starting:[stl,stl_ih], all:[]}, posRange:[aix,aix+ai0.length-1]};
-				op1.index=out.length;
+			//let op1={allEls:{starting:[stl,stl_ih], all:[]}, posRange:[aix,aix+ai0.length-1]};
+				//op1.index=out.length;
+                
+                op.resultMarks=[null,[]];
+                //op1.resultMarks=[null,[]];
 				
 			//create marks
-			let done_txn=[];
 			let p0=op.posRange[0];
             let p1=op.posRange[1];
 			for(let b=p0; b<=p1; ++b){
 				let txb=srch[1][b];
-				let txn=txb[2];
-				let pel=txb[0];
-				let doneIx=done_txn.findIndex(n=>{return n[0]===txn});
-				let pix=pels.findIndex(prl=>{return prl[0]===pel;});
-				if(pix===-1){
-					pels.push([pel,1]);
-				}else{
-					pels[pix][1]=pels[pix][1]+1; //count number of marks in each parent
-				}
-				if(doneIx===-1){
+				let txn=txb[2]; //text node
+                let st=txb[3];
+				let pel=txb[0]; //parent
+                
+                let als=op.allEls.all.findIndex(prl=>{return prl===pel;});
+                if(als===-1){
 					op.allEls.all.push([pel,pel.innerHTML]);
-					op1.allEls.all.push([pel,pel.innerHTML]);
-					let mks=getMatchingNodesShadow_order(pel, 'mark', true, false);
-					let markMap={};
+				}
+                
+                let pix=pels.findIndex(prl=>{return prl[0]===pel;});
+				if(pix===-1){
+					pels.push([pel,[i],[b],[txn]]);
+				}else if(pels[pix][1].includes(i)===false){
+					pels[pix][1].push(i); //res indexes per parent
+					pels[pix][2].push(b);
+                    if(pels[pix][3].includes(txn)===false){ pels[pix][3].push(txn) }
+				}else{
+                    pels[pix][2].push(b);
+                    if(pels[pix][3].includes(txn)===false){ pels[pix][3].push(txn) }
+                }
+                
+                let tix=txns.findIndex(tn=>{return tn[0]===txn;});
+				if(tix===-1){
+					txns.push([txn,[i],[b],st]);
+				}else if(txns[tix][1].includes(i)===false){
+					txns[tix][1].push(i); //res indexes per text node
+                    txns[tix][2].push(b); 
+				}else{
+                    txns[tix][2].push(b);
+                }
+            }
+            out.push(op);
+        }
+        
+        for(let i=0, len_i=pels.length; i<len_i; i++){
+                let pelsi=pels[i];
+                let pel=pelsi[0];
+                let mks=getMatchingNodesShadow_order(pel, 'mark', true, false);
+				let markMap={};
 					for(let m=0, len_m=mks.length; m<len_m; m++){
 						let mk=mks[m];
-						let m1=(m+1).toString();
+						let m1=(-1*(m+1)).toString();
 						markMap[m1]=mk.className;
 						mk.className=m1;
-					}
-					let txc=[...txn.textContent];
-					let clss= b!==p0 ? '' : ' class="0"' ;
-					txc[txb[1]]=`<mark${clss}>`+txc[txb[1]]+'</mark>';
-					done_txn.push([txn,txc,pel,markMap]);
-				}else{
-					let txc=done_txn[doneIx][1];
-					txc[txb[1]]='<mark>'+txc[txb[1]]+'</mark>';
-					done_txn[doneIx][1]=txc;
-				}
-			}
-			
-			op.resultMarks=[null,[]];
-			op1.resultMarks=[null,[]];
-			for(let i=0, len_i=done_txn.length; i<len_i; i++){
-				let di=done_txn[i];
-				di[0].textContent=di[1].join('');
-
-				let classMarks=[...di[2].innerHTML.matchAll(/\&lt\;mark class\=\"([0-9]+)\"\&gt\;/g)];
+                    }
+                    pels[i].push(markMap);
+        }
+        
+        for(let i=0, len_i=pels.length; i<len_i; i++){ //loop over parents
+            let nw=[];
+            for(let k=0, len_k=pels[i][3].length; k<len_k; k++){ //loop over each parent's text nodes
+                
+                let nd=pels[i][3][k];
+                for(let j=0, len_j=txns.length; j<len_j; j++){
+            let tj=txns[j];
+            if(tj[0]===nd){
+                nw.push(j);
+            }
+            
+            }
+            }
+            pels[i][3]=nw;
+        }
+        
+        for(let i=0, len_i=pels.length; i<len_i; i++){
+            let pi=pels[i];
+            let p0=pi[0];
+            let ptx=pi[3];
+            for(let j=0, len_j=ptx.length; j<len_j; j++){ //loop over each text node for this parent
+                let pj=ptx[j];
+                let tj=txns[pj];
+                let txc=[...tj[0].textContent];
+                let tjm=tj[2];
+                let st=tj[3];
+                let tjm0=tjm[0];
+                
+                for(let b=0, len_b=tjm.length; b<len_b; b++){
+                    let tjmb=tjm[b];
+                    txc[tjmb-st]=`<mark class="${tjmb}">${srch[0][tjmb]}</mark>`;
+                }
+                txns[pj][0].textContent=txc.join('');
+            }
+        }
+        
+        let mks2=[];
+        for(let i=0, len_i=pels.length; i<len_i; i++){
+            let p0=pels[i][0];
+            let classMarks=[...p0.innerHTML.matchAll(/\&lt\;mark class\=\"(\-?[0-9]+)\"\&gt\;/g)];
 				classMarks.forEach((c)=>{
 					let c0=c[0];
 					let c0_nw=c0.replaceAll('&lt;','<').replaceAll('&gt;','>');	
-					di[2].innerHTML=di[2].innerHTML.replaceAll(c0,c0_nw);
+					p0.innerHTML=p0.innerHTML.replaceAll(c0,c0_nw);
 				});
-				di[2].innerHTML=di[2].innerHTML.replaceAll('&lt;mark&gt;','<mark>').replaceAll('&lt;/mark&gt;','</mark>');
-				
-				let mks=getMatchingNodesShadow_order(di[2], 'mark', true, false);
-				let mk0=mks.find(m=>{return m.className==='0'});
-				let markMap=di[3];
+				p0.innerHTML=p0.innerHTML.replaceAll('&lt;mark&gt;','<mark>').replaceAll('&lt;/mark&gt;','</mark>');
+                
+                let mks=getMatchingNodesShadow_order(p0, 'mark', true, false);
+                
+				let markMap=pels[i][4];
 				
 				for(let m=0, len_m=mks.length; m<len_m; m++){
-					let mk=mks[m];
-					let m1=(m+1).toString();
-					if(mk===mk0){
-						mk.className='';
-						op.resultMarks[0]=mk;
-						op.resultMarks[1].push(mk);
-						op1.resultMarks[0]=mk;
-						op1.resultMarks[1].push(mk);
-					}else if(typeof(markMap[m1])!=='undefined'){
-						mk.className=markMap[m1];
+                    let mk=mks[m];
+                    let mc=mk.className;
+                    if(typeof(markMap[mc])!=='undefined'){
+						mk.className=markMap[mc];
 					}else{
-						op.resultMarks[1].push(mk);
-						op1.resultMarks[1].push(mk);
-					}
+                        mks2.push(mk);
+                    }
 				}
 			}
-						
-			if(typeof(byRes[ai0])==='undefined'){
-				byRes[ai0]=[op1];
+                
+        
+            for(let i=0, len_i=out.length; i<len_i; i++){
+            let t=out[i];
+            let t1=JSON.parse(JSON.stringify(t));
+            t1.index=i;
+            t1.allEls=t.allEls;
+            t1.resultMarks=t.resultMarks;
+            let ps=t.posRange;
+            let p0=ps[0];
+            let p1=ps[1];
+            let mb=mks2.find(m=>{return m.className==p0.toString()});
+            if(typeof(mb)!=='undefined'){
+                mb.className='';
+                out[i].resultMarks[0]=mb;
+                out[i].resultMarks[1].push(mb);
+            }
+			for(let b=p0+1; b<=p1; ++b){
+                mb=mks2.find(m=>{return m.className==b.toString()});
+                if(typeof(mb)!=='undefined'){
+                    mb.className='';
+                    out[i].resultMarks[1].push(mb);
+                }
+            }
+            
+            let tx=t.text;
+            if(typeof(byRes[tx])==='undefined'){
+				byRes[tx]=[t1];
                 brc++;
 			}else{
-				byRes[ai0].push(op1);
+				byRes[tx].push(t1);
 			}
-            out.push(op);
-        }
+    }
 	
 	out.byResult=byRes;
     out.byResult_count=brc;
 	out.docText=srch;
-	
+
+        
 	out.replaceText=function(w,i,endBias){ //w = string to replace pattern-matching sub-strings with (use '*' to insert the found substring, and '\\*' to print an asterisk); i = the result to replace, if undefined or null, all will be replaced!; if endBias===true, the replacement text will be entered into the text node of the last character of the result
 		if(!(i>=0 && i<this.length) && typeof(i)!=='undefined' && i!==null){
 			console.error(`Argument must be between 0 and ${this.length-1}, undefined, or null!`);
@@ -538,7 +607,7 @@ let fs={
 }
 function gotMessage(message, sender, sendResponse) {
     let m=message.message;
-	console.log(message);
+	//console.log(message);
 	if(m==='getStatus'){ //Send back whether the page is already marked
 		chrome.runtime.sendMessage({
                         message: 'hi'
