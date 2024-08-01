@@ -1,6 +1,6 @@
 var sct=null;
 var resShowing=false;
-var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct;
+var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct, unic;
 
 function rsz(){
 	ifrm.style.setProperty( 'width', `${ifdoc.body.scrollWidth}px`, 'important' );
@@ -553,13 +553,14 @@ let fs={
 		ifrm.style.setProperty( 'float', 'right', 'important' );
 		ifdoc.body.style.cssText='background: rgb(51, 51, 51) !important; margin: 0px !important; border: 0px !important; padding: 0px !important; overflow: hidden !important; height: max-content !important;'
 		ifdoc.body.innerHTML=`<style>* {color:white;} button { color:black !important; background: buttonface !important;} section.resSct {display: flex; flex-direction: row; margin-left: 4px;vertical-align: top;text-overflow: clip;width: -webkit-fill-available;text-wrap: wrap;} section.resSct > *{margin-right: 1ch;}</style>
-		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><section style="display: flex; flex-direction:column;"><section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section><section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section></section><section style="display: flex; flex-direction: column;"><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button><button title="Expand/collapse search results" id="expRes" style="width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;">▼</button></section></section>
+		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><section style="display: flex; flex-direction:column;"> <section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="unic" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Unicode regex</span></section> </section><section style="display: flex; flex-direction: column;"><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button><button title="Expand/collapse search results" id="expRes" style="width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;">▼</button></section></section>
 		<textarea id="txta" title="Enter unique selector of element within which the text will be marked" placeholder="Enter CSS selector here: " style="min-height: min-content;"></textarea><br>
 		<button style="white-space: nowrap; margin-top: 0.27em;" id="pattSearch">Search pattern!</button>
 		</section>
 		<section id="results" style="visibility: hidden;display: flex; flex-direction: column;max-height:${window.screen.availHeight}px;overflow-y: scroll;overflow-x: hidden;"></section>`;
 		
 		txta=ifdoc.getElementById('txta');
+        unic=ifdoc.getElementById('unic');
         let textInp=(e)=>{
             if(!resShowing){
                 ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
@@ -573,6 +574,13 @@ let fs={
             textInp(e);
         };
 		plainSearch= ifdoc.getElementById('plainSearch');
+        plainSearch.oninput=(e)=>{
+            if(plainSearch.checked){
+                unic.parentElement.style.visibility='hidden';
+            }else{
+                unic.parentElement.style.visibility='visible';
+            }
+        };
 		caseInsens= ifdoc.getElementById('caseInsens');
 		res_sct= ifdoc.getElementById('results');
         ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
@@ -599,11 +607,13 @@ let fs={
 				docText=getSearchable(txta.value); 
 				let isPlain= plainSearch.checked ? true : false ;
 				let isCaseInsens= caseInsens.checked ? true : false ;
-				let p= isPlain ? patEl.innerText : new RegExp(patEl.innerText, (isCaseInsens ? "gi" : "g"));
+                let isUnic= unic.checked ? true : false ;
+                let rg=isUnic?'u':'';
+				let p= isPlain ? patEl.innerText : new RegExp(patEl.innerText, (isCaseInsens ? rg+"gi" : rg+"g"));
 				if(isPlain){
 					res=findText(docText,patEl.innerText,true,isCaseInsens);
 				}else{ //regex
-					res=findText(docText,new RegExp(patEl.innerText, (isCaseInsens ? "gi" : "g")));
+					res=findText(docText,new RegExp(patEl.innerText, (isCaseInsens ? rg+"gi" : rg+"g")));
 				}
 					console.log(res);
 				for(let i=0, len=res.length; i<len; i++){
