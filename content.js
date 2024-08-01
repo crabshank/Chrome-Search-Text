@@ -560,8 +560,18 @@ let fs={
 		<section id="results" style="visibility: hidden;display: flex; flex-direction: column;max-height:${window.screen.availHeight}px;overflow-y: scroll;overflow-x: hidden;"></section>`;
 		
 		txta=ifdoc.getElementById('txta');
-        
+        let textInp=(e)=>{
+            if(!resShowing){
+                ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
+            }
+        }
+        txta.oninput=(e)=>{
+            textInp(e);
+        };
 		patEl=ifdoc.getElementById('selText');
+        patEl.oninput=(e)=>{
+            textInp(e);
+        };
 		plainSearch= ifdoc.getElementById('plainSearch');
 		caseInsens= ifdoc.getElementById('caseInsens');
 		res_sct= ifdoc.getElementById('results');
