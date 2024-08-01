@@ -1,4 +1,5 @@
 var sct=null;
+var resShowing=false;
 var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct;
 
 function rsz(){
@@ -538,7 +539,7 @@ let fs={
 		sct.style.setProperty( 'display', 'inline-block','important' );
 		sct.style.setProperty( 'top', '0px', 'important' );
 		sct.style.setProperty( 'right', '0px', 'important' );
-		sct.style.setProperty( 'height', '100%', 'important' );
+		sct.style.setProperty( 'height', 'max-content', 'important' );
 		sct.style.setProperty( 'position', 'fixed', 'important' );
 		sct.style.setProperty( 'margin', 0, 'important' );
 		sct.style.setProperty( 'border', 0, 'important' );
@@ -552,21 +553,36 @@ let fs={
 		ifrm.style.setProperty( 'float', 'right', 'important' );
 		ifdoc.body.style.cssText='background: rgb(51, 51, 51) !important; margin: 0px !important; border: 0px !important; padding: 0px !important; overflow: hidden !important; height: max-content !important;'
 		ifdoc.body.innerHTML=`<style>* {color:white;} button { color:black !important; background: buttonface !important;} section.resSct {display: flex; flex-direction: row; margin-left: 4px;vertical-align: top;text-overflow: clip;width: -webkit-fill-available;text-wrap: wrap;} section.resSct > *{margin-right: 1ch;}</style>
-		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><section style="display: flex; flex-direction:column;"><section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section><section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section></section><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button></section>
+		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><section style="display: flex; flex-direction:column;"><section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section><section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section></section><section style="display: flex; flex-direction: column;"><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button><button title="Expand/collapse search results" id="expRes" style="width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;">▼</button></section></section>
 		<textarea id="txta" title="Enter unique selector of element within which the text will be marked" placeholder="Enter CSS selector here: " style="min-height: min-content;"></textarea><br>
 		<button style="white-space: nowrap; margin-top: 0.27em;" id="pattSearch">Search pattern!</button>
 		</section>
-		<section id="results" style="display: flex; flex-direction: column;max-height:${window.screen.availHeight}px;overflow-y: scroll;overflow-x: hidden;"></section>`;
+		<section id="results" style="visibility: hidden;display: flex; flex-direction: column;max-height:${window.screen.availHeight}px;overflow-y: scroll;overflow-x: hidden;"></section>`;
 		
 		txta=ifdoc.getElementById('txta');
+        
 		patEl=ifdoc.getElementById('selText');
 		plainSearch= ifdoc.getElementById('plainSearch');
 		caseInsens= ifdoc.getElementById('caseInsens');
 		res_sct= ifdoc.getElementById('results');
+        ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
 		rsz();
 		ifdoc.body.onclick=(e)=>{
 			let t=e.target;
-			if(t.id==='pattSearch'){ //Do search
+            if(t.id==='expRes'){
+                if(resShowing){ //hide
+                    res_sct.style.visibility='hidden';
+                    sct.style.setProperty( 'height', 'max-content', 'important' );
+                            ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
+                    t.innerHTML='▼';
+                }else{
+                    res_sct.style.visibility='visible';
+                    sct.style.setProperty( 'height', '100%', 'important' );
+                    ifrm.style.height='100%';
+                    t.innerHTML='▲';
+                }
+                resShowing=!resShowing;
+			}else if(t.id==='pattSearch'){ //Do search
 				if(typeof(res)!=='undefined'){
 					res.revert_hl();
 				}
