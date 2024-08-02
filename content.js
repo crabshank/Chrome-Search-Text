@@ -1,11 +1,13 @@
 var sct=null;
 var resShowing=false;
-var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct, unic;
+var allReplaced=false;
+var anyReplaced=[];
+var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct, unic,expRes;
 
 function rsz(){
 	ifrm.style.setProperty( 'width', `${ifdoc.body.scrollWidth}px`, 'important' );
 	sct.style.setProperty( 'width', `${ifrm.getBoundingClientRect().width}px`, 'important' );
-	res_sct.style.setProperty( 'max-height', `${window.screen.availHeight}px`, 'important' );
+	res_sct.style.setProperty( 'max-height', `${sct.getBoundingClientRect().height-res_sct.getBoundingClientRect().top-6	}px`, 'important' );
 }
 
 function elRemover(el){
@@ -220,7 +222,6 @@ function getSearchable(s){ //Return selectable text
     return txt;
 }
 
-
 function findText(srch,pat,plain,case_insensitive){	//search for text; case-insenstive is only relevant when plain===true;
     let out=[];
 	let str=srch[0];
@@ -265,12 +266,9 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 			let stl=srch[1][aix][0];
 			let stl_ih=stl.innerHTML;
 			let op={text:ai0, allEls:{starting:[stl,stl_ih], all:[]}, posRange:[aix,aix+ai0.length-1]};
-			//let op1={allEls:{starting:[stl,stl_ih], all:[]}, posRange:[aix,aix+ai0.length-1]};
-				//op1.index=out.length;
-                
-                op.resultMarks=[null,[]];
-                //op1.resultMarks=[null,[]];
-				
+
+            op.resultMarks=[null,[]];
+
 			//create marks
 			let p0=op.posRange[0];
             let p1=op.posRange[1];
@@ -309,7 +307,7 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
             }
             out.push(op);
         }
-        
+        out.byParent=pels.map(p=>{return [p[0],p[1]]});
         for(let i=0, len_i=pels.length; i<len_i; i++){
                 let pelsi=pels[i];
                 let pel=pelsi[0];
@@ -422,8 +420,7 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 	out.byResult=byRes;
     out.byResult_count=brc;
 	out.docText=srch;
-
-        
+	
 	out.replaceText=function(w,i,endBias){ //w = string to replace pattern-matching sub-strings with (use '*' to insert the found substring, and '\\*' to print an asterisk); i = the result to replace, if undefined or null, all will be replaced!; if endBias===true, the replacement text will be entered into the text node of the last character of the result
 		if(!(i>=0 && i<this.length) && typeof(i)!=='undefined' && i!==null){
 			console.error(`Argument must be between 0 and ${this.length-1}, undefined, or null!`);
@@ -440,27 +437,26 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 			let ra=this[a];
 			let done_txn=[];
 			let spw=w.split(/(?<!\\)\*/).join(ra.text).split('\\*').join('*');
-			let p0=ra.posRange[0];
-            let p1=ra.posRange[1];
-			for(let b=p0; b<=p1; ++b){
-				let txb=this.docText[1][b];
-				let txn=txb[2];
-				let doneIx=done_txn.findIndex(n=>{return n[0]===txn});
-				if(doneIx===-1){
-					let txc=[...txn.textContent];
-                    
-					txc[txb[1]]=( (b===p0 && endBias!==true) || (b===p1 && endBias===true) )? spw : '';
-					done_txn.push([txn,txc]);
-				}else{
-					let txc=done_txn[doneIx][1];
-					txc[txb[1]]= b===p1 && endBias===true ? spw : '';
-					done_txn[doneIx][1]=txc;
+			let mks=ra.resultMarks[1];
+			let txc=[];
+			if(endBias!==true){
+				for(let i=1, len_i=mks.length; i<len_i; i++){
+					try{
+						mks[i].outerHTML='';
+					}catch(e){;}
 				}
-			}
-			
-			for(let i=0, len_i=done_txn.length; i<len_i; i++){
-				let di=done_txn[i];
-				di[0].textContent=di[1].join('');
+				try{
+						mks[0].outerHTML=spw;
+				}catch(e){;}
+			}else{
+				for(let i=0, len_i=mks.length-1; i<len_i; i++){
+					try{
+						mks[i].outerHTML='';
+					}catch(e){;}
+				}
+				try{
+						mks.at(-1).outerHTML=spw;
+				}catch(e){;}
 			}
 		}
 	}
@@ -520,13 +516,31 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
 }
 
 function closeFrame(){
-	if(typeof(res)!=='undefined'){
+	if(anyReplaced.length>0 || allReplaced){
+			if (confirm('Do you want to revert replacements?')) {
+				if(typeof(res)!=='undefined'){
+					if(allReplaced){
+						res.revert_hl();
+					}else{
+						anyReplaced.forEach( r=>{
+							res.revert_hl(r);
+						});
+					}
+				}
+			}
+	}else{
+		if(typeof(res)!=='undefined'){
 			res.revert_hl();
+		}
 	}
+	
 	if(sct!==null){
 		robs.disconnect();
 		elRemover(sct);
 		sct=null;
+		resShowing=false;
+		allReplaced=false;
+		anyReplaced=[];
 	}
 }
 
@@ -551,52 +565,136 @@ let fs={
 		ifrm.style.setProperty( 'width', `${ifdoc.body.scrollWidth}px`, 'important' );
 		ifrm.style.setProperty( 'height', '100%', 'important' );
 		ifrm.style.setProperty( 'float', 'right', 'important' );
-		ifdoc.body.style.cssText='background: rgb(51, 51, 51) !important; margin: 0px !important; border: 0px !important; padding: 0px !important; overflow: hidden !important; height: max-content !important;'
-		ifdoc.body.innerHTML=`<style>* {color:white;} button { color:black !important; background: buttonface !important;} section.resSct {display: flex; flex-direction: row; margin-left: 4px;vertical-align: top;text-overflow: clip;width: -webkit-fill-available;text-wrap: wrap;} section.resSct > *{margin-right: 1ch;}</style>
+		ifdoc.body.style.cssText='background: rgb(51, 51, 51) !important; margin: 0px !important; border: 0px !important; padding: 0px !important; overflow: hidden !important; height: max-content !important; width: max-content !important;'
+		ifdoc.body.innerHTML=`<style>* {color:white;} button { color:black !important; background: buttonface !important;height: fit-content;} section.resSct {display: flex; flex-direction: row; margin-left: 4px;vertical-align: top;text-overflow: clip;width: -webkit-fill-available;text-wrap: wrap; margin-bottom} section.resSct > *{align-items: self-end;margin-right: 1ch; text-wrap: nowrap;} textarea{resize:none; overflow: hidden;} section.replace {display: -webkit-box; -webkit-box-align: end;} section.replace span {margin-right: 0.40ch;}section.replace * {align-items: self-end;} .nodeSel{color: #00f2ff;font-weight: bold;}</style>
 		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><section style="display: flex; flex-direction:column;"> <section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="unic" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Unicode regex</span></section> </section><section style="display: flex; flex-direction: column;"><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button><button title="Expand/collapse search results" id="expRes" style="width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;">▼</button></section></section>
 		<textarea id="txta" title="Enter unique selector of element within which the text will be marked" placeholder="Enter CSS selector here: " style="min-height: min-content;"></textarea><br>
 		<button style="white-space: nowrap; margin-top: 0.27em;" id="pattSearch">Search pattern!</button>
 		</section>
-		<section id="results" style="visibility: hidden;display: flex; flex-direction: column;max-height:${window.screen.availHeight}px;overflow-y: scroll;overflow-x: hidden;"></section>`;
+		<section id="results" style="margin-bottom: 0.2ch;visibility: hidden;display: flex; flex-direction: column;max-height:${sct.getBoundingClientRect().height}px;overflow-y: scroll;overflow-x: hidden;"></section>`;
 		
 		txta=ifdoc.getElementById('txta');
+		txta.style.minHeight=`${txta.scrollHeight}px`;
         unic=ifdoc.getElementById('unic');
-        let textInp=(e)=>{
-            if(!resShowing){
-                ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
-            }
-        }
-        txta.oninput=(e)=>{
-            textInp(e);
-        };
+        expRes=ifdoc.getElementById('expRes');
+
 		patEl=ifdoc.getElementById('selText');
-        patEl.oninput=(e)=>{
-            textInp(e);
-        };
+
 		plainSearch= ifdoc.getElementById('plainSearch');
-        plainSearch.oninput=(e)=>{
-            if(plainSearch.checked){
-                unic.parentElement.style.visibility='hidden';
-            }else{
-                unic.parentElement.style.visibility='visible';
-            }
+		 ifdoc.body.oninput=(e)=>{
+			let t=e.target;
+			if(t.tagName==='TEXTAREA'){
+				t.style.height='min-content';
+				t.style.height= t.value.trim()==='' ? '2.45ch' : t.scrollHeight+3;
+				if(t===txta){
+					 if(!resShowing){
+						ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
+					}
+				}
+			}else if(t===plainSearch){
+				if(plainSearch.checked){
+					unic.parentElement.style.visibility='hidden';
+				}else{
+					unic.parentElement.style.visibility='visible';
+				}
+			}
         };
+		
 		caseInsens= ifdoc.getElementById('caseInsens');
 		res_sct= ifdoc.getElementById('results');
         ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
 		rsz();
 		ifdoc.body.onclick=(e)=>{
 			let t=e.target;
-            if(t.id==='expRes'){
+			let tp=t.parentElement;
+            if(t.classList.contains('replaceBtn')){
+				tp.firstElementChild.style.display='flex';
+				let ogOpen=t.getAttribute('open');
+				t.setAttribute('open','true');
+				if(t.id==='replaceAllBtn'){
+					if(ogOpen=='true'){
+						if (confirm('Are you sure that you want to replace all results?')) {
+						  res.replaceText(tp.getElementsByTagName('TEXTAREA')[0].value,null,t.parentElement.getElementsByTagName('INPUT')[0].checked);
+						  allReplaced=true;
+						  anyReplaced=true;
+						   res_sct.style.visibility='hidden';
+							sct.style.setProperty( 'height', 'max-content', 'important' );
+							ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
+							expRes.innerHTML='▼';
+						}
+					}
+				}else{
+					if(ogOpen=='true'){
+						if (confirm('Are you sure that you want to replace this result?')) {	
+							let ix=parseInt(tp.getAttribute('ix'));
+							res.replaceText(tp.getElementsByTagName('TEXTAREA')[0].value,ix,t.parentElement.getElementsByTagName('INPUT')[0].checked);
+							anyReplaced.push(ix); 
+							let affct=[];
+							let els=Array.from(new Set(res[ix].allEls.all.map(l=>{return l[0]})));
+							els.forEach( l=>{
+								let elx=res.byParent.find( p=>{return p[0]===l;} );
+								affct.push(...elx[1]);
+							});
+							affct=Array.from(new Set(affct)).sort();
+							let toHide=[];
+							if(affct.length>1){
+								let affct2=affct.filter(a=>{return a!==ix});
+								if (confirm(`Replacing this result willl also affect ${affct2.length===1 ? 'result' : 'results' }: ${affct2.join(', ')}. Do you wish to continue?`)) {
+									let rsct=[...res_sct.querySelectorAll('section.resSct')];
+									toHide=rsct.filter(c=>{return affct2.includes(parseInt(c.getAttribute('ix')))});
+									toHide.unshift(tp.parentElement);
+								}
+							}else{
+								toHide=[tp.parentElement];
+							}
+							toHide.forEach( h=>{
+								h.getElementsByClassName('jumpTo')[0].style.display='none';
+								h.getElementsByClassName('revertBtn')[0].setAttribute('last',true);
+								h.getElementsByClassName('replace')[0].style.display='none';
+							});
+						}
+					}
+				}
+				
+            }else if(t.classList.contains('revertBtn')){
+				let ix=parseInt(tp.getAttribute('ix'));
+
+				let affct=[];
+				let els=Array.from(new Set(res[ix].allEls.all.map(l=>{return l[0]})));
+				els.forEach( l=>{
+					let elx=res.byParent.find( p=>{return p[0]===l;} );
+					affct.push(...elx[1]);
+				});
+				affct=Array.from(new Set(affct)).sort();
+				let toHide=[];
+				if(affct.length>1){
+					let affct2=affct.filter(a=>{return a!==ix});
+					if (confirm(`Replacing this result willl also affect ${affct2.length===1 ? 'result' : 'results' }: ${affct2.join(', ')}. Do you wish to continue?`)) {
+						res.revert_hl(ix);
+						let rsct=[...res_sct.querySelectorAll('section.resSct')];
+						toHide=rsct.filter(c=>{return affct2.includes(parseInt(c.getAttribute('ix')))});
+						toHide.unshift(tp);
+						toHide.forEach( h=>{
+							h.style.display='none';
+						});
+					}
+				}else{
+					res.revert_hl(ix);
+					let h=tp;
+					h.style.display='none';
+				}
+	
+            }else if(t.id==='expRes'){
                 if(resShowing){ //hide
                     res_sct.style.visibility='hidden';
                     sct.style.setProperty( 'height', 'max-content', 'important' );
                             ifrm.style.height=res_sct.getBoundingClientRect().top+'px';
                     t.innerHTML='▼';
-                }else{
+                }else if(!allReplaced){
                     res_sct.style.visibility='visible';
                     sct.style.setProperty( 'height', '100%', 'important' );
                     ifrm.style.height='100%';
+					rsz();
                     t.innerHTML='▲';
                 }
                 resShowing=!resShowing;
@@ -616,12 +714,15 @@ let fs={
 					res=findText(docText,new RegExp(patEl.innerText, (isCaseInsens ? rg+"gi" : rg+"g")));
 				}
 					console.log(res);
+					
+					let ht=`<section id="replaceAll" class="replace" style="margin-top:2px;"><section style="display: none;"><textarea title="Use '*' to insert the found substring, and '\\*' to print an asterisk" style="height: 2.45ch;"></textarea><span><input class="lastNode" type="checkbox"> Replace on last node</span></section> <button id="replaceAllBtn" class="replaceBtn" open="false">Replace all</button></section>`;
+					res_sct.insertAdjacentHTML('beforeend',ht);
 				for(let i=0, len=res.length; i<len; i++){
 					let ri=res[i];
 					let rin=ri.allEls.starting[0];
 					let rid=rin.id.trim()!=='' ? `[id="${rin.id}"]` : ''; 
 					let ricl=rin.className.trim()!=='' ? `[class="${rin.className}"]` : ''; 
-					let ht=`<section ix="${i}" class="resSct"><div class="nodeSel">${rin.nodeName.toLocaleLowerCase()}${rid}${ricl}</div><div class="resText">${ri.text}</div><button class="jumpTo" jix="${i}">Jump</button></section>`;
+					ht=`<section ix="${i}" class="resSct"><span class="index">[${i}]</span><div class="nodeSel">${rin.nodeName.toLocaleLowerCase()}${rid}${ricl}</div><div class="resText">${ri.text}</div><button class="jumpTo" jix="${i}">Jump</button><section ix="${i}" class="replace"><section style="display: none;"><textarea title="Use '*' to insert the found substring, and '\\*' to print an asterisk" style="height: 2.45ch;"></textarea><span><input class="lastNode" type="checkbox"> Replace on last node</span></section><button class="replaceBtn" open="false">Replace</button></section> <button class="revertBtn" last="false">Revert</button></section>`;
 					res_sct.insertAdjacentHTML('beforeend',ht);
 				}
 			}else if(t.className==='jumpTo'){
@@ -644,6 +745,7 @@ let fs={
 		robs.observe(ifdoc.body);
 	}
 }
+
 function gotMessage(message, sender, sendResponse) {
     let m=message.message;
 	//console.log(message);
