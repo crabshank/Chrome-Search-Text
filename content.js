@@ -2,6 +2,7 @@ var sct=null;
 var resShowing=false;
 var allReplaced=false;
 var anyReplaced=[];
+var isMinimised=false;
 var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct, unic,expRes;
 
 function rsz(){
@@ -515,6 +516,11 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
     return out;
 }
 
+function minimiseFrame(){
+	sct.style.setProperty( 'display', 'none','important' );
+	isMinimised=true;
+}
+
 function closeFrame(){
 	if(anyReplaced.length>0 || allReplaced){
 			if (confirm('Do you want to revert replacements?')) {
@@ -546,6 +552,10 @@ function closeFrame(){
 
 let fs={
 	setupPatt: (s)=>{
+		if(isMinimised){
+			sct.style.setProperty( 'display', 'inline-block','important' );
+			return;
+		}
 		closeFrame();
 		sct=document.createElement('section');
 		document.body.insertAdjacentElement('beforeend',sct);
@@ -567,7 +577,7 @@ let fs={
 		ifrm.style.setProperty( 'float', 'right', 'important' );
 		ifdoc.body.style.cssText='background: rgb(51, 51, 51) !important; margin: 0px !important; border: 0px !important; padding: 0px !important; overflow: hidden !important; height: max-content !important; width: max-content !important;'
 		ifdoc.body.innerHTML=`<style>* {color:white;} button { color:black !important; background: buttonface !important;height: fit-content;} section.resSct {display: flex; flex-direction: row; margin-left: 4px;vertical-align: top;text-overflow: clip;width: -webkit-fill-available;text-wrap: wrap; margin-bottom} section.resSct > *{align-items: self-end;margin-right: 1ch; text-wrap: nowrap;} textarea{resize:none; overflow: hidden;} section.replace {display: -webkit-box; -webkit-box-align: end;} section.replace span {margin-right: 0.40ch;}section.replace * {align-items: self-end;} .nodeSel{color: #00f2ff;font-weight: bold;}</style>
-		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><section style="display: flex; flex-direction:column;"> <section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="unic" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Unicode regex</span></section> </section><section style="display: flex; flex-direction: column;"><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button><button title="Expand/collapse search results" id="expRes" style="width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;">▼</button></section></section>
+		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><section style="display: flex; flex-direction:column;"> <section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="unic" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Unicode regex</span></section> </section><section style="display: flex; flex-direction: column;"><button id="minimiseFrame" style="font-weight: bolder;width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;" title="Hide frame, use the action button to make it show again.">🗕</button><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button><button title="Expand/collapse search results" id="expRes" style="width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;">▼</button></section></section>
 		<textarea id="txta" title="Enter unique selector of element within which the text will be marked" placeholder="Enter CSS selector here: " style="min-height: min-content;"></textarea><br>
 		<button style="white-space: nowrap; margin-top: 0.27em;" id="pattSearch">Search pattern!</button>
 		</section>
@@ -728,6 +738,8 @@ let fs={
 			}else if(t.className==='jumpTo'){
 				let ix=parseInt(t.getAttribute('jix'));
 				res.jump(ix);
+			}else if(t.id==='minimiseFrame'){
+				minimiseFrame();
 			}else if(t.id==='closeFrame'){
 				closeFrame();
 			}
