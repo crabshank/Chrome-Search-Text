@@ -715,14 +715,14 @@ let fs={
 				}
 					console.log(res);
 					
-					let ht=`<section id="replaceAll" class="replace" style="margin-top:2px;"><section style="display: none;"><textarea title="Use '*' to insert the found substring, and '\\*' to print an asterisk" style="height: 2.45ch;"></textarea><span><input class="lastNode" type="checkbox"> Replace on last node</span></section> <button id="replaceAllBtn" class="replaceBtn" open="false">Replace all</button></section>`;
+					let ht=`<section id="replaceAll" class="replace" style="margin-top:2px;"><section style="display: none;"><textarea title="Use '*' to insert the found substring, and '\*' to print an asterisk" style="height: 2.45ch;"></textarea><span><input class="lastNode" type="checkbox"> Replace on last node</span></section> <button id="replaceAllBtn" class="replaceBtn" open="false">Replace all</button></section>`;
 					res_sct.insertAdjacentHTML('beforeend',ht);
 				for(let i=0, len=res.length; i<len; i++){
 					let ri=res[i];
 					let rin=ri.allEls.starting[0];
 					let rid=rin.id.trim()!=='' ? `[id="${rin.id}"]` : ''; 
 					let ricl=rin.className.trim()!=='' ? `[class="${rin.className}"]` : ''; 
-					ht=`<section ix="${i}" class="resSct"><span class="index">[${i}]</span><div class="nodeSel">${rin.nodeName.toLocaleLowerCase()}${rid}${ricl}</div><div class="resText">${ri.text}</div><button class="jumpTo" jix="${i}">Jump</button><section ix="${i}" class="replace"><section style="display: none;"><textarea title="Use '*' to insert the found substring, and '\\*' to print an asterisk" style="height: 2.45ch;"></textarea><span><input class="lastNode" type="checkbox"> Replace on last node</span></section><button class="replaceBtn" open="false">Replace</button></section> <button class="revertBtn" last="false">Revert</button></section>`;
+					ht=`<section ix="${i}" class="resSct"><span class="index">[${i}]</span><div class="nodeSel">${rin.nodeName.toLocaleLowerCase()}${rid}${ricl}</div><div class="resText">${ri.text}</div><button class="jumpTo" jix="${i}">Jump</button><section ix="${i}" class="replace"><section style="display: none;"><textarea title="Use '*' to insert the found substring, and '\*' to print an asterisk" style="height: 2.45ch;"></textarea><span><input class="lastNode" type="checkbox"> Replace on last node</span></section><button class="replaceBtn" open="false">Replace</button></section> <button class="revertBtn" last="false">Revert</button></section>`;
 					res_sct.insertAdjacentHTML('beforeend',ht);
 				}
 			}else if(t.className==='jumpTo'){
