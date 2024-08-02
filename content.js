@@ -3,7 +3,7 @@ var resShowing=false;
 var allReplaced=false;
 var anyReplaced=[];
 var isMinimised=false;
-var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct, unic,expRes;
+var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct, unic,expRes,markCol,markStyl;
 
 function rsz(){
 	ifrm.style.setProperty( 'width', `${ifdoc.body.scrollWidth}px`, 'important' );
@@ -543,6 +543,7 @@ function closeFrame(){
 	if(sct!==null){
 		robs.disconnect();
 		elRemover(sct);
+		elRemover(markStyl);
 		isMinimised=false;
 		sct=null;
 		resShowing=false;
@@ -559,6 +560,10 @@ let fs={
 			return;
 		}
 		closeFrame();
+		markStyl=document.createElement('style');
+		markStyl.innerHTML='mark {background-color: #ffff00;}';
+		document.head.insertAdjacentElement('afterbegin',markStyl);
+		
 		sct=document.createElement('section');
 		document.body.insertAdjacentElement('beforeend',sct);
 		sct.style.setProperty( 'z-index', Number.MAX_SAFE_INTEGER, 'important' );
@@ -579,12 +584,14 @@ let fs={
 		ifrm.style.setProperty( 'float', 'right', 'important' );
 		ifdoc.body.style.cssText='background: rgb(51, 51, 51) !important; margin: 0px !important; border: 0px !important; padding: 0px !important; overflow: hidden !important; height: max-content !important; width: max-content !important;'
 		ifdoc.body.innerHTML=`<style>* {color:white;} button { color:black !important; background: buttonface !important;height: fit-content;} section.resSct {display: flex; flex-direction: row; margin-left: 4px;vertical-align: top;text-overflow: clip;width: -webkit-fill-available;text-wrap: wrap; margin-bottom} section.resSct > *{align-items: self-end;margin-right: 1ch; text-wrap: nowrap;} textarea{resize:none; overflow: hidden;} section.replace {display: -webkit-box; -webkit-box-align: end;} section.replace span {margin-right: 0.40ch;}section.replace * {align-items: self-end;} .nodeSel{color: #00f2ff;font-weight: bold;}</style>
-		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><section style="display: flex; flex-direction:column;"> <section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="unic" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Unicode regex</span></section> </section><section style="display: flex; flex-direction: column;"><button id="minimiseFrame" style="font-weight: bolder;width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;" title="Hide frame, use the action button to make it show again.">🗕</button><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button><button title="Expand/collapse search results" id="expRes" style="width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;">▼</button></section></section>
+		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <section><div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><span title="Mark colour"><input id="markCol" type="color" style="width: 4.808ch !important;border: transparent;height: 3ch !important;padding: 0;background: transparent;margin: 0;margin-right: 0.175ch;">#FFFF00</span></section><section style="display: flex; flex-direction:column;"> <section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="unic" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Unicode regex</span></section> </section><section style="display: flex; flex-direction: column;"><button id="minimiseFrame" style="font-weight: bolder;width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;" title="Hide frame, use the action button to make it show again.">🗕</button><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button><button title="Expand/collapse search results" id="expRes" style="width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;">▼</button></section></section>
 		<textarea id="txta" title="Enter unique selector of element within which the text will be marked" placeholder="Enter CSS selector here: " style="min-height: min-content;"></textarea><br>
 		<button style="white-space: nowrap; margin-top: 0.27em;" id="pattSearch">Search pattern!</button>
 		</section>
 		<section id="results" style="margin-bottom: 0.2ch;visibility: hidden;display: flex; flex-direction: column;max-height:${sct.getBoundingClientRect().height}px;overflow-y: scroll;overflow-x: hidden;"></section>`;
 		
+		markCol=ifdoc.getElementById('markCol');
+		markCol.value='#ffff00';
 		txta=ifdoc.getElementById('txta');
 		txta.style.minHeight=`${txta.scrollHeight}px`;
         unic=ifdoc.getElementById('unic');
@@ -595,7 +602,10 @@ let fs={
 		plainSearch= ifdoc.getElementById('plainSearch');
 		 ifdoc.body.oninput=(e)=>{
 			let t=e.target;
-			if(t.tagName==='TEXTAREA'){
+			if(t.id==='markCol'){
+				t.nextSibling.textContent=t.value.toLocaleUpperCase();
+				markStyl.innerHTML=`mark {background-color: ${t.value};}`;
+			}else if(t.tagName==='TEXTAREA'){
 				t.style.height='min-content';
 				t.style.height= t.value.trim()==='' ? '2.45ch' : t.scrollHeight+3;
 				if(t===txta){
