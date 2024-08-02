@@ -543,6 +543,7 @@ function closeFrame(){
 	if(sct!==null){
 		robs.disconnect();
 		elRemover(sct);
+		isMinimised=false;
 		sct=null;
 		resShowing=false;
 		allReplaced=false;
@@ -554,6 +555,7 @@ let fs={
 	setupPatt: (s)=>{
 		if(isMinimised){
 			sct.style.setProperty( 'display', 'inline-block','important' );
+			isMinimised=false;
 			return;
 		}
 		closeFrame();
