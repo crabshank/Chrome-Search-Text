@@ -205,19 +205,23 @@ function getSearchable(s){ //Return selectable text
 	}
 	
     let txt=['',[]];
+	let txns=[];
 	for(let i=0, len_i=sel.length; i<len_i; i++){
 		let el=sel[i];
 		let n=getMatchingNodesShadow_order(el, '#text', true, false);
         let st=0;
         for(let k=0, len_k=n.length; k<len_k; k++){
             let nk=n[k];
-            let pp=nk.parentElement;
-            let dtc=nk.textContent;
-            txt[0]+=dtc;
-            for(let i=0, len_i=dtc.length; i<len_i; i++){
-                txt[1].push([pp,i,nk,st]);
-            }
-        st+=dtc.length;
+			if( typeof(txns.find(t=>{return t===nk;})) === 'undefined'){
+				txns.push(nk);
+				let pp=nk.parentElement;
+				let dtc=nk.textContent;
+				txt[0]+=dtc;
+				for(let i=0, len_i=dtc.length; i<len_i; i++){
+					txt[1].push([pp,i,nk,st]);
+				}
+				st+=dtc.length;
+			}
         }
 	}
     return txt;
