@@ -736,7 +736,7 @@ let fs={
 					res=findText(docText,new RegExp(patEl.innerText, (isCaseInsens ? rg+"gi" : rg+"g")));
 				}
 					console.log(res);
-					
+					res_sct.innerHTML='';
 					let ht=`<section id="replaceAll" class="replace" style="margin-top:2px;"><section style="display: none;"><textarea title="Use '*' to insert the found substring, and '\*' to print an asterisk (without quotes)" style="height: 2.45ch;"></textarea><span><input class="lastNode" type="checkbox"> Replace on last node</span></section> <button id="replaceAllBtn" class="replaceBtn" open="false">Replace all</button></section>`;
 					res_sct.insertAdjacentHTML('beforeend',ht);
 				for(let i=0, len=res.length; i<len; i++){
