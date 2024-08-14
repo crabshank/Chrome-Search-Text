@@ -733,7 +733,6 @@ let fs={
 				let isCaseInsens= caseInsens.checked ? true : false ;
                 let isUnic= unic.checked ? true : false ;
                 let rg=isUnic?'u':'';
-				let p= isPlain ? patEl.innerText : new RegExp(patEl.innerText, (isCaseInsens ? rg+"gi" : rg+"g"));
 				if(isPlain){
 					res=findText(docText,patEl.innerText,true,isCaseInsens);
 				}else{ //regex
