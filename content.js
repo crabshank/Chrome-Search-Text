@@ -590,7 +590,7 @@ let fs={
 		}
 		closeFrame();
 		markStyl=document.createElement('style');
-		markStyl.innerHTML='mark {background-color: #ffff00;}';
+		markStyl.innerHTML='mark {background-color: #ffff00 !important; color: inherit !important;}';
 		document.head.insertAdjacentElement('afterbegin',markStyl);
 		
 		sct=document.createElement('section');
@@ -634,7 +634,7 @@ let fs={
 			let t=e.target;
 			if(t.id==='markCol'){
 				t.nextSibling.textContent=t.value.toLocaleUpperCase();
-				markStyl.innerHTML=`mark {background-color: ${t.value};}`;
+				markStyl.innerHTML=`mark {background-color: ${t.value} !important; color: inherit !important;}`;
 			}else if(t.tagName==='TEXTAREA'){
 				t.style.height='min-content';
 				t.style.height= t.value.trim()==='' ? '2.45ch' : t.scrollHeight+3;
