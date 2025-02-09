@@ -5,9 +5,34 @@ var anyReplaced=[];
 var isMinimised=false;
 var res,ifrm,ifdoc,robs,docText,txta,patEl,plainSearch,caseInsens,res_sct, unic,expRes,markCol,markStyl;
 
+function getScreenWidth(mx){
+	let w=[
+					//document?.documentElement?.scrollWidth,
+					//document?.body?.parentNode?.scrollWidth,
+					//document?.body?.scrollWidth,
+					//document?.head?.scrollWidth,
+					//window.screen.availWidth,
+					//window.screen.width,
+					document?.documentElement?.clientWidth,
+					document?.body?.parentNode?.clientWidth,
+					document?.body?.clientWidth,
+					document?.head?.clientWidth
+				].filter( (d)=>{return d>0} );
+				
+		if(w.length>0){
+				if(mx){	
+					return Math.max(...w);
+				}else{
+					return Math.min(...w);
+				}
+			}else{
+				return 0;
+			}
+}
+
 function rsz(){
 	ifrm.style.setProperty( 'width', `${ifdoc.body.scrollWidth}px`, 'important' );
-	sct.style.setProperty( 'width', `${ifrm.getBoundingClientRect().width}px`, 'important' );
+	sct.style.setProperty( 'width', `${Math.min(ifrm.getBoundingClientRect().width,getScreenWidth(false))}px`, 'important' );
 	res_sct.style.setProperty( 'max-height', `${sct.getBoundingClientRect().height-res_sct.getBoundingClientRect().top-6	}px`, 'important' );
 }
 
@@ -571,8 +596,9 @@ let fs={
 		sct=document.createElement('section');
 		document.body.insertAdjacentElement('beforeend',sct);
 		sct.style.setProperty( 'z-index', Number.MAX_SAFE_INTEGER, 'important' );
-		sct.style.setProperty( 'display', 'inline-block','important' );
-		sct.style.setProperty( 'top', '0px', 'important' );
+		sct.style.setProperty( 'display', 'inline-grid','important' );
+		sct.style.setProperty( 'overflow-x', 'overlay','important' );
+        sct.style.setProperty( 'top', '0px', 'important' );
 		sct.style.setProperty( 'right', '0px', 'important' );
 		sct.style.setProperty( 'height', 'max-content', 'important' );
 		sct.style.setProperty( 'position', 'fixed', 'important' );

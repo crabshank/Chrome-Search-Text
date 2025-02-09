@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Search text",
-  "version": "2024.7",
+  "version": "2025.2",
   //"options_page":  "options.html",
   "content_scripts": [
     {
