@@ -222,18 +222,27 @@ function getScrollY(anc){
 }
 
 function getSearchable(s){ //Return selectable text
-
-	let sel= s!==false && typeof(s)!=='undefined' && s.trim()!=='' ? getMatchingNodesShadow_order(document,s,false,false) : [document.documentElement];
-	if(sel===null && s!==false){
-		alert('Invalid CSS selector!');
-		return;
-	}
+    
+    let sel=[];
+	if(s!==false && typeof(s)!=='undefined' && s.trim()!==''){
+        sel=getMatchingNodesShadow_order(document,s,false,false);
+    }else{
+        let wsel=window.getSelection();
+        let rng=document.createRange();
+        rng.selectNodeContents(document.documentElement);
+        wsel.removeAllRanges();
+        wsel.addRange(rng);
+        sel=getMatchingNodesShadow_order(document, '#text', true, false).filter(t=>{
+            return wsel.containsNode(t);
+        });
+        wsel.removeAllRanges();
+    }
 	
     let txt=['',[]];
 	let txns=[];
 	for(let i=0, len_i=sel.length; i<len_i; i++){
 		let el=sel[i];
-		let n=getMatchingNodesShadow_order(el, '#text', true, false);
+        let n = el.nodeName==='#text' ? [el] : getMatchingNodesShadow_order(el, '#text', true, false);
         let st=0;
         for(let k=0, len_k=n.length; k<len_k; k++){
             let nk=n[k];
