@@ -222,18 +222,32 @@ function getScrollY(anc){
 }
 
 function getSearchable(s){ //Return selectable text
-
-	let sel= s!==false && typeof(s)!=='undefined' && s.trim()!=='' ? getMatchingNodesShadow_order(document,s,false,false) : [document.documentElement];
-	if(sel===null && s!==false){
-		alert('Invalid CSS selector!');
-		return;
-	}
+    
+    let sel=[];
+	if(s!==false && typeof(s)!=='undefined' && s.trim()!==''){
+        sel=getMatchingNodesShadow_order(document,s,false,false);
+    }else{
+        let wsel=window.getSelection();
+        let rng=document.createRange();
+        rng.selectNodeContents(document.documentElement);
+        wsel.removeAllRanges();
+        wsel.addRange(rng);
+        sel=getMatchingNodesShadow_order(document, '#text', true, false).filter(t=>{
+            return wsel.containsNode(t);
+        }).map(n=>{
+            return n.parentElement;
+        });
+        sel=Array.from(new Set(sel));
+        wsel.removeAllRanges();
+    }
 	
-    let txt=['',[]];
+    let txt=['',[],sel];
+    sel=getMatchingNodesShadow_order(document,false,true,false);
+    
 	let txns=[];
 	for(let i=0, len_i=sel.length; i<len_i; i++){
 		let el=sel[i];
-		let n=getMatchingNodesShadow_order(el, '#text', true, false);
+        let n = getMatchingNodesShadow_order(el, '#text', true, false);
         let st=0;
         for(let k=0, len_k=n.length; k<len_k; k++){
             let nk=n[k];
@@ -286,7 +300,8 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
     }else{ //regex
 		a=[...str.matchAll(pat)];
 	}
-	
+        
+        let s2=srch[2];
 		let pels=[];
         let txns=[];
 		for(let i=0, len_i=a.length; i<len_i; i++){
@@ -335,7 +350,17 @@ function findText(srch,pat,plain,case_insensitive){	//search for text; case-inse
                     txns[tix][2].push(b);
                 }
             }
-            out.push(op);
+            let doPush=true;
+            let opAll=op.allEls.all;
+            for(let i=0, len_i=opAll.length; i<len_i; i++){
+                if(!s2.includes(opAll[i][0])){
+                    doPush=false;
+                    break;
+                }
+            }
+            if(doPush){
+                out.push(op);
+            }
         }
         out.byParent=pels.map(p=>{return [p[0],p[1]]});
         for(let i=0, len_i=pels.length; i<len_i; i++){
@@ -615,7 +640,7 @@ let fs={
 		ifdoc.body.style.cssText='background: rgb(51, 51, 51) !important; margin: 0px !important; border: 0px !important; padding: 0px !important; overflow: hidden !important; height: max-content !important; width: max-content !important;'
 		ifdoc.body.innerHTML=`<style>* {color:white;} button { color:black !important; background: buttonface !important;height: fit-content;} section.resSct {display: flex; flex-direction: row; margin-left: 4px;vertical-align: top;text-overflow: clip;width: -webkit-fill-available;text-wrap: wrap; margin-bottom} section.resSct > *{align-items: self-end;margin-right: 1ch; text-wrap: nowrap;} textarea{resize:none; overflow: hidden;} section.replace {display: -webkit-box; -webkit-box-align: end;} section.replace span {margin-right: 0.40ch;}section.replace * {align-items: self-end;} .nodeSel{color: #00f2ff;font-weight: bold;}</style>
 		<section style="display: flex; flex-direction: row; place-items: flex-start;"> <section><div id="selText" style="border:buttonface; border-width: 0.28ch; border-style: groove; padding: 0.2ch;min-width: 16.9ch;" title="Enter search pattern (regex, without bounding forward slashes/plaintext)" contenteditable=""></div><span title="Mark colour"><input id="markCol" type="color" style="width: 4.808ch !important;border: transparent;height: 3ch !important;padding: 0;background: transparent;margin: 0;margin-right: 0.175ch;">#FFFF00</span></section><section style="display: flex; flex-direction:column;"> <section style="display: flex;flex-direction: row;"><input type="checkbox" title="Regex, by default" id="plainSearch" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;" title="Regex, by default">Plain text</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="caseInsens" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Case-insensitive</span></section> <section style="display: flex;flex-direction: row;"><input type="checkbox" id="unic" style="place-self: center"><span style="text-wrap: nowrap;align-self: center;">Unicode regex</span></section> </section><section style="display: flex; flex-direction: column;"><button id="minimiseFrame" style="font-weight: bolder;width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;" title="Hide frame, use the action button to make it show again.">🗕</button><button id="closeFrame" style="width: 4.3ch;color: red;background: black !important;border: 1px buttonface outset;margin-left: 0.02ch;">❌</button><button title="Expand/collapse search results" id="expRes" style="width: 4.3ch;border: 1px buttonface outset;margin-left: 0.02ch; margin-top: 0.07ch;">▼</button></section></section>
-		<textarea id="txta" title="Enter unique selector of element within which the text will be marked" placeholder="Enter CSS selector here: " style="min-height: min-content;"></textarea><br>
+		<textarea id="txta" style="color: black !important;" title="Enter unique selector of element within which the text will be marked" placeholder="Enter CSS selector here: " style="min-height: min-content;"></textarea><br>
 		<button style="white-space: nowrap; margin-top: 0.27em;" id="pattSearch">Search pattern!</button>
 		</section>
 		<section id="results" style="margin-bottom: 0.2ch;visibility: hidden;display: flex; flex-direction: column;max-height:${sct.getBoundingClientRect().height}px;overflow-y: scroll;overflow-x: hidden;"></section>`;
